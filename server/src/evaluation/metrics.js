@@ -17,9 +17,12 @@ export function calculateMetrics(rows,inputLabels,requests){
  let role=0,location=0,joint=0;
  for(const row of rows){const label=lookup.get(row.job_id);const r=row.predicted_role===label.role,c=city(row.predicted_city)===city(label.city);role+=Number(r);location+=Number(c);joint+=Number(r&&c);}
  const known=requests.length>0&&requests.every(request=>request.cost_usd!==null&&request.input_tokens!==null&&request.output_tokens!==null&&!['started','usage_unknown','failed'].includes(request.status));
+ const measured=requests.filter(row=>row.cost_usd!==null);
+ const observed=measured.length?measured.reduce((sum,row)=>sum+Number(row.cost_usd),0):null;
  const totalCost=known?requests.reduce((sum,row)=>sum+Number(row.cost_usd),0):null;
  return {sample_size:rows.length,role_accuracy:role/rows.length,city_accuracy:location/rows.length,joint_accuracy:joint/rows.length,
   input_tokens:requests.reduce((sum,row)=>sum+(row.input_tokens??0),0),output_tokens:requests.reduce((sum,row)=>sum+(row.output_tokens??0),0),requests:requests.length,
-  usage_complete:known,total_cost_usd:totalCost,cost_per_1000_posts_usd:totalCost===null?null:totalCost/rows.length*1000,
+  usage_complete:known,unmeasured_requests:requests.filter(row=>row.cost_usd===null).length,observed_cost_usd:observed,observed_cost_per_1000_posts_usd:observed===null?null:observed/rows.length*1000,total_cost_usd:totalCost,cost_per_1000_posts_usd:totalCost===null?null:totalCost/rows.length*1000,
+  model_breakdown:Object.entries(rows.reduce((groups,row)=>{const key=(row.provider||'unspecified')+'/'+(row.model||'unspecified');groups[key]=(groups[key]||0)+1;return groups;},{})).map(([model,posts])=>({model,posts})),
   cost_basis:'Measured provider tokens times recorded rates, including invalid/repeated evaluation calls; not an invoice.'};
 }

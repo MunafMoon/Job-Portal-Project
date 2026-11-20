@@ -24,7 +24,7 @@ try{
  }
  const repository=await api('');
  const key=await api('/actions/secrets/public-key');await sodium.ready;
- const values={DATABASE_URL:process.env.DATABASE_URL,DATABASE_CA_PEM:process.env.DATABASE_CA_FILE?await readFile(process.env.DATABASE_CA_FILE,'utf8'):process.env.DATABASE_CA_PEM,GEMINI_API_KEY:process.env.GEMINI_API_KEY,OPENAI_API_KEY:process.env.OPENAI_API_KEY};
+ const values={DATABASE_URL:process.env.GITHUB_DATABASE_URL||process.env.DATABASE_URL,DATABASE_CA_PEM:process.env.DATABASE_CA_FILE?await readFile(process.env.DATABASE_CA_FILE,'utf8'):process.env.DATABASE_CA_PEM,GEMINI_API_KEY:process.env.GEMINI_API_KEY,OPENAI_API_KEY:process.env.OPENAI_API_KEY};
  for(const [name,value]of Object.entries(values)){
   if(!value)continue;
   const encrypted=sodium.to_base64(sodium.crypto_box_seal(sodium.from_string(value),sodium.from_base64(key.key,sodium.base64_variants.ORIGINAL)),sodium.base64_variants.ORIGINAL);

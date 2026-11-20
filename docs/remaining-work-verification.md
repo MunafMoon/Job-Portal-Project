@@ -13,3 +13,8 @@
 - At this checkpoint no Gemini API key was configured; no live LLM accuracy, tokens or cost are claimed.
 - Daily ingestion and CI workflow definitions are implemented. Remote schedule activation and repository secret configuration must be separately verified.
 - Acceptance report: artifacts/acceptance.json; complete=false accurately reflects pending tagging/evaluation.
+
+## Live continuation
+Gemini key was configured and encrypted in GitHub Actions. Five public listings and ten frozen evaluation jobs were tagged successfully: 10,787 measured input tokens, 1,347 measured output tokens, recorded standard list-price estimate $0.0066036. Later Gemini calls returned HTTP 503; a Hydrogen attempt timed out. Failed calls have unknown usage/cost and are never replaced with zero total cost. Bulk tagging and the remaining evaluation predictions are incomplete.
+
+All 50 human gold labels are still blank at this checkpoint. The source was pushed to main and remote CI passed. A dispatched ingestion run failed with ENETUNREACH at migration because GitHub cannot reach the direct Supabase endpoint. A separate GITHUB_DATABASE_URL session-pooler override is supported; Supabase connection details are pending. No full acceptance success is claimed.

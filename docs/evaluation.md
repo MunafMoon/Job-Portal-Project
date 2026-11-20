@@ -34,4 +34,4 @@ Unknown usage produces null cost and a failing exit code, never zero or an inven
 Existing label/output files are never silently overwritten. Incomplete labels or predictions fail explicitly.
 
 ## Completion status
-The commands and their tests are implemented. Live Gemini usage and manually labeled accuracy remain pending until a valid key and human labels are supplied.
+The commands and their tests are implemented. Gemini generated ten snapshot predictions with real usage; subsequent calls returned HTTP 503, so forty predictions remain pending. Human gold labels are still required. A failed call with unreported usage makes the total cost unknown; observed measured cost is exposed separately as a lower bound. No accuracy is claimed before complete human labels and predictions exist.

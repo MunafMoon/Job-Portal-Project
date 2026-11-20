@@ -10,7 +10,7 @@ try{
  await db.query('alter table public.schema_migrations enable row level security');
  await db.query('revoke all on public.schema_migrations from anon,authenticated');
  for(const name of (await readdir('supabase/migrations')).filter(x=>x.endsWith('.sql')).sort()){
-  const sql=await readFile('supabase/migrations/'+name,'utf8');
+  const sql=(await readFile('supabase/migrations/'+name,'utf8')).replace(/\r\n/g,'\n').replace(/^\uFEFF/,'');
   const checksum=createHash('sha256').update(sql).digest('hex');
   const prior=await db.query('select checksum from public.schema_migrations where name=$1',[name]);
   if(prior.rowCount){if(prior.rows[0].checksum!==checksum)throw new Error('MIGRATION_CHECKSUM_MISMATCH');continue;}

@@ -28,3 +28,8 @@ The workflow never uploads .env, credentials, job exports or raw LLM responses.
 Use Actions > Daily real-job ingestion > Run workflow once after secrets are configured, then inspect logs and the ingestion-acceptance artifact.
 A separate CI workflow runs syntax/YAML validation, unit/API/React tests, build and a production dependency audit on push/pull requests.
 Actions versions follow the official repositories' current v7 documentation; review updates as part of maintenance.
+
+## Verified repository state
+Source was pushed to main on 2026-11-20. Tests and build passed remotely (run 44735613585). The first manual ingestion run (44735731813) failed at database migration with ENETUNREACH: the configured direct Supabase hostname is unreachable from this runner. Database and CA secrets are encrypted in Actions; Gemini key was subsequently configured and encrypted in Actions. The IPv4 pooler connection is still pending.
+
+Set GITHUB_DATABASE_URL to the exact Session pooler URI from Supabase Connect (5432) in local .env, then run npm run github:setup -- --repo MunafMoon/Job-Portal-Project --dispatch. This preserves the working local DATABASE_URL while updating the GitHub DATABASE_URL secret. The setup helper reuses the local Git credential manager in memory and encrypts secrets with the repository public key; it never prints or commits credentials.

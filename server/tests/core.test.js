@@ -124,3 +124,5 @@ it('does not fetch when the shared daily request budget is exhausted', async () 
     await expect(request(remotive.policy.endpoint)).rejects.toThrow('Daily budget exhausted');
     expect(fetcher).not.toHaveBeenCalled();
 });
+
+it('does not enable inherited object properties as sources',()=>{expect(()=>enabledSources('constructor')).toThrow();expect(()=>enabledSources('__proto__')).toThrow();});

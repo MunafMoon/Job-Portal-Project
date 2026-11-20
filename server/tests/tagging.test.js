@@ -51,3 +51,17 @@ it('stops before billing when budget is too small',async()=>{
 });
 
 it('rejects whitespace as role evidence',()=>{expect(()=>validateTags({tags:[{...tag,role_evidence:' '}]},[job])).toThrow();});
+
+it('does not count stale listing writes as successful tags',async()=>{
+ const db={query:vi.fn(async text=>({rows:[{id:'request-id'}],rowCount:text.startsWith('update jobs')?0:1}))};
+ const providerCall=vi.fn(async()=>({text:JSON.stringify({tags:[tag]}),complete:true,usage:{input_tokens:50,cached_input_tokens:0,output_tokens:20},cost_usd:.001}));
+ const result=await tagJobs(db,{jobs:[job],env,providerCall,logger:vi.fn()});
+ expect(result.tagged).toBe(0);expect(result.failed).toBe(1);
+});
+
+it('does not report zero total cost for an unmeasured failed request',async()=>{
+ const db={query:vi.fn(async()=>({rows:[{id:'request-id'}],rowCount:1}))};
+ const providerCall=vi.fn(async()=>{throw new Error('LLM_HTTP_503');});
+ const result=await tagJobs(db,{jobs:[job],env,providerCall,logger:vi.fn()});
+ expect(result.cost_usd).toBeNull();expect(result.usage_complete).toBe(false);expect(result.known_cost_usd).toBe(0);
+});

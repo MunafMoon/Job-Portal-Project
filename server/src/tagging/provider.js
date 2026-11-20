@@ -9,7 +9,11 @@ export function providerConfig(env=process.env){
  const catalog=provider==='gemini'&&model==='gemini-3.5-flash-lite'?{input:0.3,cached:0.03,output:2.5,source:'https://aistudio.google.com/docs/pricing#gemini-3.5-flash-lite',checked_at:'2026-11-20',basis:'standard paid-tier list-price estimate; not invoice charges'}:null;
  function rate(key,fallback){const value=env[key];const number=value!==undefined&&value!==''?Number(value):fallback;if(!Number.isFinite(number)||number<0)throw new Error('LLM_PRICING_REQUIRED');return number;}
  const pricing={input:rate('LLM_INPUT_USD_PER_MILLION',catalog?.input),cached:rate('LLM_CACHED_INPUT_USD_PER_MILLION',catalog?.cached??catalog?.input),output:rate('LLM_OUTPUT_USD_PER_MILLION',catalog?.output),source:env.LLM_PRICING_REFERENCE||catalog?.source||'operator supplied rates',checked_at:catalog?.checked_at||new Date().toISOString().slice(0,10),basis:env.LLM_PRICING_BASIS||catalog?.basis||'operator supplied estimate'};
- return {provider,apiKey,model,pricing};
+ const timeoutMs=Number(env.LLM_TIMEOUT_MS||60000);
+ if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1000||timeoutMs>180000)throw new Error('INVALID_LLM_TIMEOUT');
+ const thinkingLevel=provider==='gemini'?(env.LLM_THINKING_LEVEL||(/gemini-4/.test(model)?'LOW':/gemini-3/.test(model)?'MINIMAL':'')):'';
+ if(thinkingLevel&&!['MINIMAL','LOW','MEDIUM','HIGH','XHIGH'].includes(thinkingLevel))throw new Error('INVALID_LLM_THINKING_LEVEL');
+ return {provider,apiKey,model,pricing:{...pricing,thinking_level:thinkingLevel},thinkingLevel,timeoutMs};
 }
 function nonnegative(value){return Number.isSafeInteger(value)&&value>=0?value:null;}
 export function extractUsage(provider,body){
@@ -32,14 +36,14 @@ export async function callProvider(config,jobs,{fetcher=fetch}={}){
  const prompt=JSON.stringify(promptInputs(jobs));
  const body=config.provider==='gemini'?{
   systemInstruction:{parts:[{text:systemPrompt}]},contents:[{role:'user',parts:[{text:prompt}]}],
-  generationConfig:{responseMimeType:'application/json',responseJsonSchema:jsonSchema,maxOutputTokens:8192},
+  generationConfig:{responseMimeType:'application/json',responseJsonSchema:jsonSchema,maxOutputTokens:8192,...(config.thinkingLevel?{thinkingConfig:{thinkingLevel:config.thinkingLevel}}:{})},
  }:{
   model:config.model,store:false,messages:[{role:'system',content:systemPrompt},{role:'user',content:prompt}],
   response_format:{type:'json_schema',json_schema:{name:'job_tags',strict:true,schema:jsonSchema}},max_completion_tokens:8192,
  };
  const url=config.provider==='gemini'?'https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(config.model)+':generateContent':'https://api.openai.com/v1/chat/completions';
  const headers={'Content-Type':'application/json',...(config.provider==='gemini'?{'x-goog-api-key':config.apiKey}:{Authorization:'Bearer '+config.apiKey})};
- const response=await fetcher(url,{method:'POST',headers,body:JSON.stringify(body),redirect:'error',signal:AbortSignal.timeout(60000)});
+ const response=await fetcher(url,{method:'POST',headers,body:JSON.stringify(body),redirect:'error',signal:AbortSignal.timeout(config.timeoutMs||60000)});
  if(!response.ok){await response.body?.cancel();throw new Error('LLM_HTTP_'+response.status);}
  const result=await response.json();
  const usage=extractUsage(config.provider,result);

@@ -3,7 +3,7 @@ A real-data fresher job board for candidates in India, built with React .jsx, Vi
 
 Current verified snapshot (2026-11-20): **870 stored records; 375 eligible, 271 review, 224 rejected** after an evidence-based rule audit. There are no fake seed jobs. Eligibility is automated and conservative; source presence does not independently prove an employer still accepts applications.
 
-The application, four-source ingestion, structured Gemini/OpenAI tagging, evaluation commands, migrations and Actions workflow definitions are implemented. Live AI tagging and evaluation results require a valid provider key and real human labels. An acceptance report deliberately remains incomplete until those checks pass.
+The application, four-source ingestion, structured Gemini/OpenAI tagging, evaluation commands, migrations and Actions workflow definitions are implemented. Live Gemini authentication and tagging were verified on five public jobs plus ten evaluation snapshots with measured usage. Subsequent calls returned 503 (and one timed out); the bulk tagging run is not complete. Human labels and an IPv4 GitHub database connection are still pending. An acceptance report deliberately remains incomplete until those checks pass.
 
 ## Run the app
 Requires Node.js matching package.json (Node 24 recommended), npm, Supabase PostgreSQL.
@@ -53,8 +53,8 @@ The chosen Gemini model has a recorded standard paid-tier pricing snapshot. Cost
 For OpenAI set LLM_PROVIDER=openai, OPENAI_API_KEY, an accessible LLM_MODEL, and explicit input/cached/output USD-per-million rates. Never put keys in VITE_ variables.
 
 Tags use strict JSON Schema and runtime validation, a bounded role taxonomy and exact evidence quotes. The model can only select cities found in credible work-location evidence; country/timezone/headquarters are not cities. Ambiguous/missing cities stay Unknown. No eligibility decisions are delegated to the LLM.
-Calls are batched, timeout-bounded and budgeted. Successful unchanged content is cached. Ingestion retains tags for unchanged input and invalidates them when relevant content changes.
-Measured usage is recorded before JSON/evidence validation, including invalid model responses. Missing usage stays unknown and stops further spend; billed requests are not automatically retried.
+Calls are batched, timeout-bounded and budgeted. LLM_TIMEOUT_MS (1000?180000) and optional Gemini LLM_THINKING_LEVEL can tune bounded latency; thinking settings are saved with pricing metadata. Successful unchanged content is cached. Ingestion retains tags for unchanged input and invalidates them when relevant content changes.
+Measured usage is recorded before JSON/evidence validation, including invalid model responses. Missing usage stays unknown and stops further spend; summaries distinguish known measured cost from an unknown total, and evaluation reports expose an observed lower-bound cost separately; billed requests are not automatically retried.
 Thinking tokens count toward Gemini output usage. Cached input is priced separately.
 
 ## Evaluation — 50 real jobs
@@ -92,7 +92,7 @@ API responses use rate limits, no-store caching, security headers and sanitized 
 .github/workflows/ingest.yml runs daily at **02:17 UTC / 07:47 India**, plus manual dispatch. It migrates, ingests, tags and uploads a sanitized acceptance artifact.
 Repository: https://github.com/MunafMoon/Job-Portal-Project
 Required Actions secrets: DATABASE_URL, DATABASE_CA_PEM (certificate contents), GEMINI_API_KEY.
-The workflow must be on the default branch and secrets must be configured before a successful remote run. Local files alone do not activate a schedule.
+The workflow is pushed to main and CI has passed. The first remote ingestion exposed an unreachable direct database endpoint; set GITHUB_DATABASE_URL to an IPv4 session-pooler URI locally and rerun npm run github:setup -- --repo MunafMoon/Job-Portal-Project --dispatch. The Gemini secret and real manual labels are still pending. The workflow must be on the default branch and all secrets configured before a successful remote run. Local files alone do not activate a schedule.
 Failures and acceptance shortfalls remain visible; no step pads data. Missing AI credentials/manual evaluation intentionally prevents a false complete report.
 See docs/automation.md for setup and limits.
 

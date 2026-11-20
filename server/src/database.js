@@ -1,4 +1,5 @@
 import pg from 'pg';
+import {rootCertificates} from 'node:tls';
 import { readFileSync } from 'node:fs';
 
 export function createDatabasePool(env = process.env) {
@@ -12,7 +13,7 @@ export function createDatabasePool(env = process.env) {
   for (const key of ['sslmode', 'sslrootcert', 'sslcert', 'sslkey']) url.searchParams.delete(key);
   return new pg.Pool({
     connectionString: url.toString(),
-    ssl: { rejectUnauthorized: true, ...(certificate ? { ca: readFileSync(certificate, 'utf8') } : {}) },
+    ssl: { rejectUnauthorized: true, ...(certificate ? { ca: [...rootCertificates,readFileSync(certificate, 'utf8')] } : {}) },
     max: 5, connectionTimeoutMillis: 10000, idleTimeoutMillis: 30000,
     query_timeout: 15000, statement_timeout: 12000,
   });
