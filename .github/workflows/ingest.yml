@@ -1,0 +1,53 @@
+name: Daily real-job ingestion
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: fresherjobs-ingestion
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_CA_PEM: ${{ secrets.DATABASE_CA_PEM }}
+      ENABLED_SOURCES: ${{ vars.ENABLED_SOURCES || 'remotive,jobicy,remoteok,himalayas' }}
+      MAX_JOB_AGE_DAYS: '30'
+      TARGET_JOB_COUNT: '200'
+      LLM_PROVIDER: ${{ vars.LLM_PROVIDER || 'gemini' }}
+      LLM_MODEL: ${{ vars.LLM_MODEL || 'gemini-3.5-flash-lite' }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      LLM_INPUT_USD_PER_MILLION: ${{ vars.LLM_INPUT_USD_PER_MILLION }}
+      LLM_CACHED_INPUT_USD_PER_MILLION: ${{ vars.LLM_CACHED_INPUT_USD_PER_MILLION }}
+      LLM_OUTPUT_USD_PER_MILLION: ${{ vars.LLM_OUTPUT_USD_PER_MILLION }}
+      TAGGING_MAX_COST_USD: ${{ vars.TAGGING_MAX_COST_USD || '2' }}
+      TAGGING_DELAY_MS: '6500'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: node scripts/write-ca.mjs
+      - run: npm run db:migrate
+      - name: Ingest permitted sources
+        run: npm run ingest
+      - name: Tag current candidates
+        if: ${{ !cancelled() }}
+        run: npm run tag -- --limit 500
+      - name: Record acceptance honestly
+        if: ${{ !cancelled() }}
+        run: npm run report -- --require-complete --out artifacts/acceptance.json
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: ingestion-acceptance
+          path: artifacts/acceptance.json
+          if-no-files-found: warn
+          retention-days: 14
