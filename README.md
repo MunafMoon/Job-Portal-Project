@@ -1,9 +1,9 @@
 # FresherJobs AI
 A real-data fresher job board for candidates in India, built with React .jsx, Vite, Tailwind CSS, Node.js/Express .js, Supabase PostgreSQL and Vitest.
 
-Current verified snapshot (2026-11-20): **870 stored records; 375 eligible, 271 review, 224 rejected** after an evidence-based rule audit. There are no fake seed jobs. Eligibility is automated and conservative; source presence does not independently prove an employer still accepts applications.
+Current verified snapshot (2026-11-20): **870 stored records; 338 eligible, 280 review, 252 rejected** after an evidence-based rule audit. There are no fake seed jobs. Eligibility is automated and conservative; source presence does not independently prove an employer still accepts applications.
 
-The application, four-source ingestion, structured Gemini/OpenAI tagging, evaluation commands, migrations and Actions workflow definitions are implemented. Live Gemini authentication and tagging were verified on five public jobs plus ten evaluation snapshots with measured usage. Subsequent calls returned 503 (and one timed out); the bulk tagging run is not complete. Human labels and an IPv4 GitHub database connection are still pending. An acceptance report deliberately remains incomplete until those checks pass.
+The application, four-source ingestion, structured Gemini/OpenAI tagging, evaluation commands, migrations and Actions workflow definitions are implemented. Live Gemini authentication and tagging were verified on five public jobs plus ten evaluation snapshots with measured usage. Subsequent calls returned 503 (and one timed out); the bulk tagging run is not complete. The GitHub pooler passed migrations and ingestion. All 50 references are now AI-assisted annotations; independent human validation remains pending. An acceptance report deliberately remains incomplete until those checks pass.
 
 ## Run the app
 Requires Node.js matching package.json (Node 24 recommended), npm, Supabase PostgreSQL.
@@ -59,7 +59,7 @@ Thinking tokens count toward Gemini output usage. Cached input is priced separat
 
 ## Evaluation — 50 real jobs
 A fixed eligible sample exists locally under artifacts/evaluation-v1.
-Set: 0e4f1cfd-82e5-4f2d-997a-ea42c0eaaf11. Human labels are deliberately blank.
+Set: 0e4f1cfd-82e5-4f2d-997a-ea42c0eaaf11. All 50 labels are filled with AI-assisted provenance and evidence in labels.metadata.json. They are not human gold labels; the original blank file is preserved.
 Read jobs.json and fill role/city in labels.json using the taxonomy in manifest.json. Do not use model predictions as gold labels.
 ```powershell
 npm run evaluate -- tag --set 0e4f1cfd-82e5-4f2d-997a-ea42c0eaaf11
@@ -70,8 +70,8 @@ Create a new sample:
 npm run evaluate -- export --seed takehome-v1 --scope eligible --size 50 --out artifacts/evaluation-new
 ```
 Seeded SHA-256 ranking is deterministic over the same population. Frozen database snapshots prevent later source updates from changing evaluation inputs.
-The scorer reports role accuracy, city accuracy, joint accuracy and cost/1000 posts from actual recorded usage (including invalid/repeated evaluation calls). It rejects incomplete labels, foreign/duplicate IDs and absent predictions. Unknown usage yields null cost, never fabricated zero. Existing label/output files are not silently overwritten.
-See docs/evaluation.md. The current sample files are local artifacts, not committed source or redistributed job feeds.
+The scorer reports human-validated accuracy only for explicitly human-origin references; AI-assisted/unverified references receive agreement fields instead, with accuracy fields null. It reports cost/1000 posts from actual recorded usage (including invalid/repeated evaluation calls). It rejects incomplete labels, foreign/duplicate IDs and absent predictions by default. --allow-partial-predictions explicitly reports available coverage and incomplete status; it never assumes missing predictions. --label-origin human is an operator attestation permitted only after actual human review. Unknown usage yields null cost, never fabricated zero. Existing label/output files are not silently overwritten.
+See docs/evaluation.md and docs/ai-assisted-label-review.md. Current comparison covers 15/50 predictions, with 93.33% role agreement against AI-assisted references; provider 503 errors prevent completion. The current sample files are local artifacts, not committed source or redistributed job feeds.
 
 ## Phase 3 — frontend and API
 The responsive UI includes real job cards, search, role/city/type/workplace filters, pagination, original application links, source attribution, counts, refresh status, and loading/empty/error states.

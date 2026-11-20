@@ -20,6 +20,6 @@ try{
   }
   await db.query('commit');
  }catch(error){await db.query('rollback');throw error;}
- console.log(JSON.stringify({event:'eligibility_rechecked',rules_version:'audited-v2',stored:jobs.length,changed,...counts}));
+ console.log(JSON.stringify({event:'eligibility_rechecked',rules_version:'audited-v3',stored:jobs.length,changed,...counts}));
 }catch{console.log(JSON.stringify({event:'eligibility_recheck_failed'}));process.exitCode=1;}
 finally{if(db){if(locked)await db.query("select pg_advisory_unlock(hashtext('fresherjobs-ingestion'))").catch(()=>{});db.release();}await pool.end();}

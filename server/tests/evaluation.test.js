@@ -11,7 +11,7 @@ it('reproduces seeded samples regardless of population order',()=>{
  expect(sample).not.toEqual(sampleJobs(jobs,'other',50));
 });
 it('scores role, city, joint and usage-normalized cost',()=>{
- const report=calculateMetrics(rows,labels,requests);
+ const report=calculateMetrics(rows,labels,requests,{labelOrigin:'human'});
  expect(report.role_accuracy).toBe(.5);expect(report.city_accuracy).toBe(1);expect(report.joint_accuracy).toBe(.5);
  expect(report.cost_per_1000_posts_usd).toBe(1);
 });

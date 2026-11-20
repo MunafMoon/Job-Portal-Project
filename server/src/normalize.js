@@ -1,3 +1,4 @@
+import {pastApplicationWindow} from './eligibility-dates.js';
 import sanitizeHtml from 'sanitize-html';
 import { createHash } from 'node:crypto';
 export function plain(value) {
@@ -26,6 +27,16 @@ export function eligibility(job, now, maxAgeDays) {
     const reasons = [];
     const text = job.title + ' ' + job.description;
     const location = job.location_evidence;
+    if(/\b(?:this|it)\s+is\s+not\s+(?:an?\s+)?(?:active|current|specific)\s+(?:job\s+)?opening\b/i.test(job.description))return {status:'rejected',reasons:['not_an_active_job_opening']};
+    if(!/\bintern(?:ship)?\b/i.test(job.title)&&/\b(?:this is a volunteer position|role type\s*:\s*volunteer)\b/i.test(job.description))return {status:'rejected',reasons:['volunteer_not_job_or_internship']};
+    if(pastApplicationWindow(job.description,now))return {status:'rejected',reasons:['past_application_window']};
+    const intake=job.title.match(/\b(?:internship|graduate intake|graduate cohort|summer intake)\s+(20\d{2})\b/i);
+    if(intake&&Number(intake[1])<now.getUTCFullYear()-1)return {status:'rejected',reasons:['historical_intake']};
+    if(intake&&Number(intake[1])<now.getUTCFullYear())reasons.push('prior_intake_needs_review');
+    if(/\b1\+\s*(?:years?|yrs?)[\u2019']?\s*(?:of\s+)?experience\b|\b[1-9]\d*\s*(?:to|[\u2013-])\s*[1-9]\d*\s*(?:years?|yrs?)\b/i.test(job.description))reasons.push('nonzero_experience_requires_review');
+    if(/\bproject duration\s*:[^.]{0,70}\b(?:through|until)\s+[A-Z][a-z]+\s+\d{1,2}(?!\d)/i.test(job.description))reasons.push('project_end_date_needs_review');
+    if(/\bsurvey researcher\b/i.test(job.title)&&/\b(?:position:\s*research:\s*how you found|role responsibilities\s+participate in a \d+-minute AI interview about your journey)\b/i.test(job.description))return {status:'rejected',reasons:['paid_feedback_participation']};
+
     if(/\b(?:couldn.t find|submit your profile|talent community|talent pool|expression of interest|future opportunities)\b/i.test(job.title))return {status:'rejected',reasons:['not_a_specific_opening']};
     if(/\((?:LATAM|US|USA|UK|Europe|Canada|Brazil|Australia|Singapore)\)|\b(?:remote in|based in)\s+(?:US|USA|UK|Europe|Canada|Brazil|Australia|Singapore)\b/i.test(job.title)&&!/\bIndia\b/i.test(job.title))reasons.push('title_location_conflict');
     if(/\b(?:at least|minimum(?: of)?|requires?|must have)\s+(?:one|1)\+?\s+years?\b/i.test(job.description))reasons.push('mandatory_experience_uncertain');

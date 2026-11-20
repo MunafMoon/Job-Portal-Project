@@ -35,3 +35,8 @@ Existing label/output files are never silently overwritten. Incomplete labels or
 
 ## Completion status
 The commands and their tests are implemented. Gemini generated ten snapshot predictions with real usage; subsequent calls returned HTTP 503, so forty predictions remain pending. Human gold labels are still required. A failed call with unreported usage makes the total cost unknown; observed measured cost is exposed separately as a lower bound. No accuracy is claimed before complete human labels and predictions exist.
+
+## AI-assisted references are now available
+The user delegated annotation to Codex. All 50 references are filled and imported as ai_assisted, with exact evidence and hashes in labels.metadata.json. They are not human gold. Default scoring detects the sidecar and keeps human-accuracy fields null; agreement fields describe the AI-reference comparison. Use import-labels to persist references independently of predictions. --allow-partial-predictions reports available coverage explicitly and does not make acceptance pass. See docs/ai-assisted-label-review.md for actual results.
+
+After genuine independent human review, save reviewed labels in a separate directory without the AI sidecar and explicitly use --label-origin human; do not rename AI annotations as human without that review. An origin conflicting with an existing sidecar or a changed label hash fails.
