@@ -92,7 +92,7 @@ API responses use rate limits, no-store caching, security headers and sanitized 
 .github/workflows/ingest.yml runs daily at **02:17 UTC / 07:47 India**, plus manual dispatch. It migrates, ingests, tags and uploads a sanitized acceptance artifact.
 Repository: https://github.com/MunafMoon/Job-Portal-Project
 Required Actions secrets: DATABASE_URL, DATABASE_CA_PEM (certificate contents), GEMINI_API_KEY.
-The workflow is pushed to main and CI has passed. The first remote ingestion exposed an unreachable direct database endpoint; set GITHUB_DATABASE_URL to an IPv4 session-pooler URI locally and rerun npm run github:setup -- --repo MunafMoon/Job-Portal-Project --dispatch. The Gemini secret and real manual labels are still pending. The workflow must be on the default branch and all secrets configured before a successful remote run. Local files alone do not activate a schedule.
+The workflow is pushed to main and CI has passed. The verified IPv4 session-pooler override is now configured in GitHub Actions. Database migration and ingestion passed remotely in run 44746848948. The Gemini key is encrypted in Actions; tagging remains blocked by provider HTTP 503 and real manual labels are still pending. The workflow must be on the default branch and all secrets configured before a successful remote run. Local files alone do not activate a schedule.
 Failures and acceptance shortfalls remain visible; no step pads data. Missing AI credentials/manual evaluation intentionally prevents a false complete report.
 See docs/automation.md for setup and limits.
 

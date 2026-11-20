@@ -18,3 +18,6 @@
 Gemini key was configured and encrypted in GitHub Actions. Five public listings and ten frozen evaluation jobs were tagged successfully: 10,787 measured input tokens, 1,347 measured output tokens, recorded standard list-price estimate $0.0066036. Later Gemini calls returned HTTP 503; a Hydrogen attempt timed out. Failed calls have unknown usage/cost and are never replaced with zero total cost. Bulk tagging and the remaining evaluation predictions are incomplete.
 
 All 50 human gold labels are still blank at this checkpoint. The source was pushed to main and remote CI passed. A dispatched ingestion run failed with ENETUNREACH at migration because GitHub cannot reach the direct Supabase endpoint. A separate GITHUB_DATABASE_URL session-pooler override is supported; Supabase connection details are pending. No full acceptance success is claimed.
+
+## GitHub connectivity resolved
+The supplied session pooler passed certificate verification and was installed in the encrypted GitHub DATABASE_URL secret. Remote run 44746848948 passed migrations and ingestion. The remaining remote tagging error was LLM_HTTP_503, not database connectivity. Current public eligible count was 374 (the earlier 375 is a historical snapshot; freshness/expiry filtering is dynamic).
